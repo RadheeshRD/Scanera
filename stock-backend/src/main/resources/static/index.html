@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCANERA — Scan. Analyze. Execute.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0d1117;
+  --ink-soft: #1a2232;
+  --ink-muted: #243044;
+  --teal: #00c4a0;
+  --teal-dim: rgba(0,196,160,0.08);
+  --amber: #f5a623;
+  --amber-dim: rgba(245,166,35,0.10);
+  --rose: #ff6b6b;
+  --text-primary: #e8e4dc;
+  --text-secondary: #8a9ab5;
+  --text-muted: #4a5568;
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(0,196,160,0.3);
+  --card-bg: rgba(255,255,255,0.03);
+  --card-bg-hover: rgba(255,255,255,0.055);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--text-primary);overflow-x:hidden;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:0.45}
+.amb{position:fixed;border-radius:50%;filter:blur(130px);pointer-events:none;z-index:0}
+.amb-1{width:700px;height:700px;background:radial-gradient(circle,#00c4a0,transparent 70%);top:-280px;left:-180px;opacity:0.08;animation:d1 20s ease-in-out infinite alternate}
+.amb-2{width:450px;height:450px;background:radial-gradient(circle,#f5a623,transparent 70%);bottom:15%;right:-80px;opacity:0.045;animation:d2 24s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translate(50px,70px)}}
+@keyframes d2{to{transform:translate(-35px,-50px)}}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 52px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,17,23,0.78);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none}
+.logo-mark{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0a2e28,#0d3d34);border:1px solid rgba(0,196,160,0.28);box-shadow:0 0 18px rgba(0,196,160,0.22),inset 0 1px 0 rgba(0,196,160,0.1);position:relative;overflow:hidden;flex-shrink:0}
+.logo-mark svg{position:relative;z-index:1}
+.logo-text{font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:var(--text-primary);letter-spacing:0.06em}
+.logo-text .e-accent{color:var(--amber)}
+.nav-links{display:flex;gap:34px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--text-secondary);font-size:13.5px;font-weight:500;letter-spacing:0.02em;transition:color 0.2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-3px;left:0;width:0;height:1.5px;background:var(--teal);transition:width 0.3s}
+.nav-links a:hover{color:var(--text-primary)}
+.nav-links a:hover::after{width:100%}
+.nav-cta{background:rgba(0,196,160,0.08);border:1.5px solid rgba(0,196,160,0.22);color:var(--teal);padding:8px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:7px;letter-spacing:0.02em}
+.nav-cta:hover{background:rgba(0,196,160,0.14);border-color:rgba(0,196,160,0.4);box-shadow:0 0 14px rgba(0,196,160,0.12)}
+
+/* ── PRIORITY TIMER ZONE ── */
+.priority-zone{padding-top:80px;position:relative;z-index:2}
+.priority-zone::before{content:'';position:absolute;top:60px;left:50%;transform:translateX(-50%);width:900px;height:280px;background:radial-gradient(ellipse,rgba(0,196,160,0.12) 0%,rgba(245,166,35,0.06) 45%,transparent 75%);pointer-events:none;z-index:0;filter:blur(40px)}
+.priority-card{max-width:1200px;margin:0 auto;padding:0 52px;position:relative;z-index:1}
+.priority-card-inner{background:linear-gradient(145deg,rgba(0,196,160,0.055) 0%,rgba(13,17,23,0.9) 55%,rgba(245,166,35,0.03) 100%);border:1.5px solid transparent;border-radius:24px;position:relative;overflow:hidden;cursor:default;transition:box-shadow 0.4s ease,transform 0.3s ease;--border-angle:0turn;background-clip:padding-box}
+.priority-card-inner::before{content:'';position:absolute;inset:-1.5px;border-radius:26px;background:linear-gradient(145deg,rgba(0,196,160,0.55),rgba(0,196,160,0.08) 40%,rgba(245,166,35,0.18) 70%,rgba(0,196,160,0.04));z-index:-1}
+.priority-card-inner::after{content:'';position:absolute;inset:1.5px;border-radius:23px;background:linear-gradient(145deg,#0f1e1a 0%,#0d1117 55%,#111520 100%);z-index:0}
+.priority-card-inner:hover{box-shadow:0 20px 60px rgba(0,0,0,0.35),0 0 30px rgba(0,196,160,0.08);transform:translateY(-2px)}
+.priority-content{position:relative;z-index:1;padding:40px 48px;display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center}
+.priority-left{display:flex;flex-direction:column;gap:12px}
+.priority-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--teal);background:rgba(0,196,160,0.06);border:1px solid rgba(0,196,160,0.18);padding:5px 12px;border-radius:20px;width:fit-content}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px rgba(0,196,160,0.8);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.6)}}
+.priority-heading{font-family:'Fraunces',serif;font-size:clamp(30px,3.8vw,48px);font-weight:300;line-height:1.1;letter-spacing:-0.02em;color:var(--text-primary)}
+.priority-heading em{font-style:italic;color:var(--teal);font-weight:300}
+.priority-heading strong{color:var(--amber);font-weight:600;font-style:normal}
+.priority-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;position:relative}
+.countdown-shell{background:linear-gradient(160deg,rgba(0,196,160,0.07),rgba(0,0,0,0.4));border:1px solid rgba(0,196,160,0.22);border-radius:20px;padding:24px 36px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 0 40px rgba(0,196,160,0.1),inset 0 1px 0 rgba(0,196,160,0.08);position:relative;overflow:hidden}
+.timer-display{font-family:'Fraunces',serif;font-size:clamp(68px,9vw,108px);font-weight:600;color:var(--teal);line-height:1;letter-spacing:-0.05em;text-shadow:0 0 60px rgba(0,196,160,0.4),0 0 20px rgba(0,196,160,0.2);font-variant-numeric:tabular-nums}
+.timer-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase}
+.timer-bar-wrap{width:100%;height:3px;background:rgba(0,196,160,0.1);border-radius:2px;overflow:hidden;margin-top:4px}
+.timer-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--teal),rgba(0,196,160,0.4));border-radius:2px;animation:drainBar 200s linear forwards}
+@keyframes drainBar{from{width:100%}to{width:0%}}
+.scan-bar{width:100%;height:1.5px;background:linear-gradient(90deg,transparent,rgba(0,196,160,0.35),transparent);border-radius:0 0 24px 24px}
+
+/* ── TICKER ── */
+.ticker-wrap{background:var(--ink-soft);border-bottom:1px solid var(--border);overflow:hidden;padding:10px 0;position:relative;z-index:1}
+.ticker-inner{display:flex;animation:ticker 34s linear infinite;width:max-content}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;padding:0 26px;font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;border-right:1px solid var(--border)}
+.t-sym{color:var(--text-primary);font-weight:500}
+.t-val{color:var(--text-secondary)}
+.t-chg.pos{color:var(--teal)}
+.t-chg.neg{color:var(--rose)}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── HERO ── */
+.hero-section{max-width:1200px;margin:0 auto;padding:56px 52px 44px;position:relative;z-index:1}
+.hero-headline{font-family:'Fraunces',serif;font-size:clamp(42px,5.2vw,68px);font-weight:300;line-height:1.07;letter-spacing:-0.025em;margin-bottom:18px}
+.hero-headline em{font-style:italic;color:var(--teal);font-weight:300}
+.hero-quote{margin-top:28px;padding:18px 22px;background:rgba(0,196,160,0.035);border-left:2px solid rgba(0,196,160,0.32);border-radius:0 10px 10px 0;max-width:480px}
+.hero-quote p{font-family:'Fraunces',serif;font-style:italic;font-size:14.5px;color:var(--text-secondary);line-height:1.72;font-weight:300}
+.hero-quote small{display:block;font-size:11.5px;color:var(--text-muted);margin-top:8px;letter-spacing:0.04em}
+
+/* ── COMMON ── */
+.sec{max-width:1200px;margin:0 auto;padding:60px 52px;position:relative;z-index:1}
+.sec-sep{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);max-width:1200px;margin:0 auto}
+.sec-tag{font-size:10.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec-tag::before{content:'';width:16px;height:1.5px;background:var(--teal)}
+.sec-title{font-family:'Fraunces',serif;font-size:clamp(26px,3.2vw,40px);font-weight:300;line-height:1.1;letter-spacing:-0.02em;margin-bottom:12px}
+.sec-title em{font-style:italic;color:var(--teal)}
+.sec-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px}
+.view-all{font-size:12.5px;color:var(--teal);text-decoration:none;display:flex;align-items:center;gap:4px;font-weight:500;transition:gap 0.2s;opacity:0.8}
+.view-all:hover{gap:8px;opacity:1}
+
+/* ── STOCK DOT ── */
+.stock-dot{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.stock-dot .dot-ring{width:28px;height:28px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;opacity:0.5}
+.stock-dot .dot-core{width:10px;height:10px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.sd-teal{color:#00c4a0;background:rgba(0,196,160,0.06)}
+.sd-blue{color:#3b6fff;background:rgba(59,111,255,0.06)}
+.sd-amber{color:#f5a623;background:rgba(245,166,35,0.06)}
+.sd-rose{color:#ff6b6b;background:rgba(255,107,107,0.06)}
+.sd-purple{color:#a78bfa;background:rgba(167,139,250,0.06)}
+.sd-cyan{color:#22d3ee;background:rgba(34,211,238,0.06)}
+
+/* ── SIGNAL CARDS ── */
+.signals-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.signal-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:22px;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden}
+.signal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,var(--teal),transparent);opacity:0;transition:opacity 0.3s}
+.signal-card:hover{background:var(--card-bg-hover);border-color:var(--border-hover);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,0.22)}
+.signal-card:hover::before{opacity:1}
+.sig-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.sig-co{display:flex;align-items:center;gap:11px}
+.co-name h4{font-size:14px;font-weight:600;color:var(--text-primary)}
+.co-name p{font-size:11px;color:var(--text-muted);margin-top:2px}
+.sig-badge{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:3px 9px;border-radius:5px;letter-spacing:0.06em}
+.b-swing{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,196,160,0.18)}
+.b-btst{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,0.18)}
+.sig-meta{display:flex;flex-direction:column;gap:9px}
+.m-row{display:flex;justify-content:space-between;align-items:center}
+.m-lbl{font-size:11.5px;color:var(--text-muted)}
+.m-val{font-size:12px;color:var(--text-secondary);font-family:'DM Mono',monospace}
+.m-val.active{color:var(--teal)}
+.m-val.hold{color:var(--amber)}
+.sig-foot{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.status-txt{font-size:11.5px;color:var(--teal);font-weight:500;display:flex;align-items:center;gap:5px}
+.s-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 4px rgba(0,196,160,0.5)}
+.sig-ret{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+.sig-ret.pos{color:var(--teal)}
+.sig-ret.neg{color:var(--rose)}
+
+/* ── PERFORMANCE ── */
+.perf-section{max-width:1200px;margin:0 auto;padding:64px 52px;position:relative;z-index:1}
+.perf-header{margin-bottom:36px}
+.perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.perf-card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:28px 24px;text-align:center;position:relative;overflow:hidden;transition:all 0.3s ease}
+.perf-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent-clr,var(--teal)),transparent);opacity:0.6}
+.perf-card:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 20px 48px rgba(0,0,0,0.28)}
+.perf-card.c-teal{--accent-clr:#00c4a0}
+.perf-card.c-amber{--accent-clr:#f5a623}
+.perf-card.c-blue{--accent-clr:#3b6fff}
+.perf-card.c-rose{--accent-clr:#ff6b6b}
+.perf-num{font-family:'Fraunces',serif;font-size:clamp(28px,4vw,52px);font-weight:600;line-height:1;letter-spacing:-0.03em;margin-bottom:6px}
+.perf-card.c-teal .perf-num{color:#00c4a0;text-shadow:0 0 32px rgba(0,196,160,0.35)}
+.perf-card.c-amber .perf-num{color:#f5a623;text-shadow:0 0 32px rgba(245,166,35,0.3)}
+.perf-card.c-blue .perf-num{color:#3b6fff;text-shadow:0 0 32px rgba(59,111,255,0.3)}
+.perf-card.c-rose .perf-num{color:#ff6b6b;text-shadow:0 0 32px rgba(255,107,107,0.3)}
+.perf-label{font-size:11.5px;color:var(--text-muted);font-weight:500;letter-spacing:0.05em;text-transform:uppercase}
+.perf-sub{font-size:10.5px;color:var(--text-muted);margin-top:4px;font-family:'DM Mono',monospace}
+.count-up{display:inline-block}
+.perf-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.br-stat{padding:14px 18px;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:12px}
+.br-stat label{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:4px}
+.br-stat value{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--text-primary)}
+.br-stat value span{font-size:10.5px;color:var(--text-muted)}
+.perf-disclaimer{font-size:11px;color:var(--text-muted);text-align:center;margin-top:18px;display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* ── WATCHLIST ── */
+.watch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.watch-card{background:var(--card-bg);border:1px solid var(--border);border-radius:13px;padding:16px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.25s}
+.watch-card:hover{border-color:rgba(245,166,35,0.28);background:var(--card-bg-hover);transform:translateY(-2px)}
+.watch-info{flex:1}
+.watch-info h4{font-size:13.5px;font-weight:600;color:var(--text-primary)}
+.watch-info p{font-size:11px;color:var(--text-muted);margin-top:2px}
+.watch-badge{font-size:10.5px;font-weight:500;padding:3px 9px;border-radius:5px;background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,0.18);white-space:nowrap}
+
+/* ── ACTIVITY ── */
+.act-list{display:flex;flex-direction:column;gap:7px}
+.act-item{display:flex;align-items:center;gap:14px;padding:15px 18px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all 0.2s}
+.act-item:hover{background:var(--card-bg-hover);border-color:var(--border-hover)}
+.act-meta{flex:1}
+.act-meta h4{font-size:13.5px;font-weight:500;color:var(--text-primary)}
+.act-meta p{font-size:11px;color:var(--text-muted);margin-top:2px}
+.act-ret{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;text-align:right}
+.act-ret small{display:block;font-size:10px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-weight:400;margin-bottom:1px}
+.act-ret.pos{color:var(--teal)}
+.act-ret.neg{color:var(--rose)}
+
+/* ── FEATURES ── */
+.features-bento{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:40px}
+.feat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:30px;transition:all 0.3s}
+.feat-card:hover{border-color:var(--border-hover)}
+.feat-card.main{background:linear-gradient(160deg,rgba(0,196,160,0.05),rgba(0,196,160,0.01));border-color:rgba(0,196,160,0.12)}
+.feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.i-teal{background:var(--teal-dim)}
+.i-blue{background:rgba(59,111,255,0.1)}
+.feat-title{font-family:'Fraunces',serif;font-size:19px;font-weight:400;margin-bottom:10px;line-height:1.25;color:var(--text-primary)}
+.feat-body{font-size:13.5px;color:var(--text-secondary);line-height:1.72;font-weight:300}
+.feat-chart{width:100%;margin-top:20px;background:rgba(0,0,0,0.28);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+
+/* ══════════════════════════════════════════
+   FOUNDER'S CORNER — merged with sector map
+   Left: live two-quadrant RRG
+   Right: crisp founder chat + super chat
+══════════════════════════════════════════ */
+.founders-section{
+  max-width:1200px;margin:0 auto;
+  padding:64px 52px;
+  position:relative;z-index:1;
+}
+
+.founders-card{
+  background:linear-gradient(145deg,rgba(245,166,35,0.04) 0%,rgba(13,17,23,0.97) 55%,rgba(0,196,160,0.03) 100%);
+  border:1px solid rgba(245,166,35,0.16);
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 0 0 1px rgba(245,166,35,0.05),0 32px 80px rgba(0,0,0,0.28);
+}
+.founders-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(245,166,35,0.7) 30%,rgba(0,196,160,0.5) 70%,transparent);
+}
+
+.founders-inner{
+  display:grid;
+  grid-template-columns:1.05fr 0.95fr;
+  gap:0;
+  min-height:480px;
+}
+
+/* ── LEFT: Sector quadrant map ── */
+.fc-map{
+  padding:40px 44px;
+  border-right:1px solid rgba(245,166,35,0.08);
+  display:flex;flex-direction:column;gap:20px;
+}
+
+.fc-map-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:10px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;
+  color:var(--teal);
+  background:rgba(0,196,160,0.06);
+  border:1px solid rgba(0,196,160,0.18);
+  padding:5px 12px;border-radius:20px;width:fit-content;
+}
+.fc-map-tag .ld{width:5px;height:5px;border-radius:50%;background:var(--teal);box-shadow:0 0 4px rgba(0,196,160,0.5)}
+
+.fc-map-title{
+  font-family:'Fraunces',serif;font-size:clamp(22px,2.4vw,30px);
+  font-weight:300;line-height:1.15;letter-spacing:-0.015em;
+}
+.fc-map-title em{font-style:italic;color:var(--teal)}
+
+/* Two-quadrant grid */
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1}
+.quad{
+  border-radius:16px;padding:18px 16px;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:12px;
+  transition:transform 0.25s;
+}
+.quad:hover{transform:translateY(-2px)}
+.quad.leading{
+  background:linear-gradient(145deg,rgba(0,196,160,0.09),rgba(0,196,160,0.03));
+  border:1px solid rgba(0,196,160,0.2);
+}
+.quad.improving{
+  background:linear-gradient(145deg,rgba(59,111,255,0.07),rgba(59,111,255,0.02));
+  border:1px solid rgba(59,111,255,0.16);
+}
+.quad-glow{position:absolute;bottom:-16px;right:-16px;width:70px;height:70px;border-radius:50%;filter:blur(24px);opacity:0.25;pointer-events:none}
+.quad.leading .quad-glow{background:#00c4a0}
+.quad.improving .quad-glow{background:#3b6fff}
+
+.quad-header{display:flex;align-items:center;justify-content:space-between}
+.quad-lbl{font-size:9.5px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
+.quad.leading .quad-lbl{color:var(--teal)}
+.quad.improving .quad-lbl{color:#3b6fff}
+.quad-badge{font-size:8.5px;font-weight:600;letter-spacing:0.05em;padding:2px 7px;border-radius:4px}
+.quad.leading .quad-badge{background:rgba(0,196,160,0.12);color:var(--teal);border:1px solid rgba(0,196,160,0.2)}
+.quad.improving .quad-badge{background:rgba(59,111,255,0.1);color:#3b6fff;border:1px solid rgba(59,111,255,0.18)}
+
+.quad-stocks{display:flex;flex-direction:column;gap:7px}
+.qs-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.025);transition:background 0.2s}
+.qs-row:hover{background:rgba(255,255,255,0.045)}
+.qs-left{display:flex;flex-direction:column;gap:1px}
+.qs-name{font-size:12px;font-weight:600;color:var(--text-primary)}
+.qs-sector{font-size:9.5px;color:var(--text-muted)}
+.qs-arrow{font-size:13px;font-weight:700}
+.quad.leading .qs-arrow{color:var(--teal)}
+.quad.improving .qs-arrow{color:#3b6fff}
+
+.quad-legend{display:flex;gap:16px;margin-top:4px}
+.ql-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:500}
+.ql-dot{width:7px;height:7px;border-radius:50%}
+
+/* ── RIGHT: Founder chat + super chat ── */
+.fc-chat{
+  padding:40px 40px;
+  display:flex;flex-direction:column;gap:18px;
+}
+
+.fc-chat-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:10px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;
+  color:var(--amber);
+  background:rgba(245,166,35,0.07);
+  border:1px solid rgba(245,166,35,0.2);
+  padding:5px 12px;border-radius:20px;width:fit-content;
+}
+.fc-chat-tag .ad{width:5px;height:5px;border-radius:50%;background:var(--amber);box-shadow:0 0 4px rgba(245,166,35,0.5)}
+
+.fc-chat-title{
+  font-family:'Fraunces',serif;font-size:clamp(18px,2vw,24px);
+  font-weight:300;line-height:1.2;
+}
+.fc-chat-title em{font-style:italic;color:var(--amber)}
+
+/* Suggested questions */
+.suggest-label{font-size:10px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;font-weight:600}
+.suggest-chips{display:flex;flex-direction:column;gap:6px}
+.chip{
+  padding:9px 13px;border-radius:10px;
+  font-size:12.5px;color:var(--text-secondary);
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--border);
+  cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;gap:8px;
+  line-height:1.4;
+}
+.chip:hover{background:rgba(245,166,35,0.06);border-color:rgba(245,166,35,0.25);color:var(--text-primary)}
+.chip-icon{font-size:11px;opacity:0.5;flex-shrink:0}
+
+/* Chat input area */
+.chat-input-wrap{
+  display:flex;flex-direction:column;gap:8px;
+  margin-top:auto;
+}
+.chat-input-box{
+  display:flex;align-items:flex-end;gap:0;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(245,166,35,0.18);
+  border-radius:14px;
+  overflow:hidden;
+  transition:border-color 0.2s;
+}
+.chat-input-box:focus-within{border-color:rgba(245,166,35,0.38);box-shadow:0 0 0 3px rgba(245,166,35,0.06)}
+.chat-textarea{
+  flex:1;background:transparent;border:none;outline:none;
+  padding:13px 16px;
+  font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-primary);
+  line-height:1.5;resize:none;min-height:52px;max-height:100px;
+  overflow-y:auto;
+}
+.chat-textarea::placeholder{color:var(--text-muted)}
+.chat-send-btn{
+  background:rgba(245,166,35,0.1);
+  border:none;border-left:1px solid rgba(245,166,35,0.14);
+  color:var(--amber);padding:0 16px;
+  cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;
+  align-self:stretch;min-width:48px;
+}
+.chat-send-btn:hover{background:rgba(245,166,35,0.2);color:var(--amber)}
+
+/* Super chat strip */
+.superchat-strip{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 16px;
+  background:linear-gradient(135deg,rgba(245,166,35,0.07),rgba(245,166,35,0.03));
+  border:1px solid rgba(245,166,35,0.2);
+  border-radius:12px;
+}
+.scs-left{display:flex;flex-direction:column;gap:2px}
+.scs-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber)}
+.scs-desc{font-size:11.5px;color:var(--text-muted);line-height:1.4}
+.scs-btn{
+  background:rgba(245,166,35,0.12);
+  border:1.5px solid rgba(245,166,35,0.32);
+  color:var(--amber);
+  padding:9px 18px;border-radius:9px;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.25s;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;
+}
+.scs-btn:hover{background:rgba(245,166,35,0.22);border-color:rgba(245,166,35,0.5);box-shadow:0 4px 18px rgba(245,166,35,0.15);transform:translateY(-1px)}
+
+/* ── FOOTER ── */
+footer{position:relative;z-index:1;border-top:1px solid var(--border);margin-top:40px}
+.foot-inner{max-width:1200px;margin:0 auto;padding:20px 52px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.foot-disc{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-muted);font-weight:300}
+.foot-disc svg{flex-shrink:0;opacity:0.3}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--ink)}::-webkit-scrollbar-thumb{background:var(--ink-muted);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--teal)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.a0{animation:fadeUp 0.8s 0.0s ease both}
+.a1{animation:fadeUp 0.8s 0.12s ease both}
+.a2{animation:fadeUp 0.8s 0.22s ease both}
+.a3{animation:fadeUp 0.8s 0.34s ease both}
+
+@media(max-width:900px){
+  nav{padding:14px 20px}
+  .nav-links{display:none}
+  .priority-content{grid-template-columns:1fr;gap:24px;padding:28px 20px}
+  .priority-right{align-items:flex-start}
+  .priority-card{padding:0 20px}
+  .hero-section,.sec,.perf-section,.founders-section{padding:44px 20px}
+  .signals-grid,.watch-grid,.features-bento{grid-template-columns:1fr}
+  .perf-grid{grid-template-columns:repeat(2,1fr) !important}
+  .perf-stats-row{grid-template-columns:1fr}
+  .founders-inner{grid-template-columns:1fr}
+  .fc-map{border-right:none;border-bottom:1px solid rgba(245,166,35,0.08)}
+  .foot-inner{flex-direction:column;text-align:center;padding:18px 20px}
+}
+</style>
+</head>
+<body>
+
+<div class="amb amb-1"></div>
+<div class="amb amb-2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2.5 A7.5 7.5 0 1 1 4.7 15.3" stroke="#00c4a0" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+        <path d="M10 5.5 A4.5 4.5 0 1 1 6.8 13.2" stroke="#00c4a0" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.6"/>
+        <circle cx="10" cy="10" r="2" fill="#00c4a0"/>
+        <line x1="10" y1="10" x2="15.8" y2="4.2" stroke="#00c4a0" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
+        <circle cx="15.8" cy="4.2" r="1.1" fill="#f5a623" opacity="0.9"/>
+      </svg>
+    </div>
+    <span class="logo-text">SCAN<span class="e-accent">E</span>RA</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Home</a></li>
+    <li><a href="#">Signals</a></li>
+    <li><a href="#">Performance</a></li>
+    <li><a href="#">Founder's Corner</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <button class="nav-cta">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5v3l2 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Early Access
+  </button>
+</nav>
+
+<!-- ══ PRIORITY TIMER ZONE ══ -->
+<div class="priority-zone">
+  <div class="priority-card a0">
+    <div class="priority-card-inner">
+      <div class="priority-content">
+        <div class="priority-left">
+          <div class="priority-eyebrow">
+            <span class="live-dot"></span>
+            NSE Live · Scanning Active
+          </div>
+          <h1 class="priority-heading">
+            Next <em>prime signal</em><br>locks in <strong>soon</strong>
+          </h1>
+        </div>
+        <div class="priority-right a1">
+          <div class="countdown-shell">
+            <div class="timer-label">Next signal in</div>
+            <div class="timer-display" id="countdown">3:20</div>
+            <div class="timer-bar-wrap"><div class="timer-bar-fill"></div></div>
+            <div class="timer-label" style="margin-top:4px">minutes · seconds</div>
+          </div>
+        </div>
+      </div>
+      <div class="scan-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span class="ticker-item"><span class="t-sym">HDFCBANK</span><span class="t-val">1,642.30</span><span class="t-chg pos">▲ +1.24%</span></span>
+    <span class="ticker-item"><span class="t-sym">RELIANCE</span><span class="t-val">2,901.15</span><span class="t-chg pos">▲ +0.87%</span></span>
+    <span class="ticker-item"><span class="t-sym">INFY</span><span class="t-val">1,389.55</span><span class="t-chg neg">▼ −1.43%</span></span>
+    <span class="ticker-item"><span class="t-sym">TCS</span><span class="t-val">3,412.80</span><span class="t-chg pos">▲ +3.55%</span></span>
+    <span class="ticker-item"><span class="t-sym">TATAMOTORS</span><span class="t-val">847.60</span><span class="t-chg neg">▼ −0.62%</span></span>
+    <span class="ticker-item"><span class="t-sym">ICICIBANK</span><span class="t-val">1,127.45</span><span class="t-chg pos">▲ +0.45%</span></span>
+    <span class="ticker-item"><span class="t-sym">LT</span><span class="t-val">3,562.10</span><span class="t-chg pos">▲ +1.72%</span></span>
+    <span class="ticker-item"><span class="t-sym">BAJFINANCE</span><span class="t-val">7,038.25</span><span class="t-chg neg">▼ −3.00%</span></span>
+    <span class="ticker-item"><span class="t-sym">MARUTI</span><span class="t-val">12,380.50</span><span class="t-chg pos">▲ +2.80%</span></span>
+    <span class="ticker-item"><span class="t-sym">NIFTY 50</span><span class="t-val">22,419.95</span><span class="t-chg pos">▲ +0.38%</span></span>
+    <span class="ticker-item"><span class="t-sym">HDFCBANK</span><span class="t-val">1,642.30</span><span class="t-chg pos">▲ +1.24%</span></span>
+    <span class="ticker-item"><span class="t-sym">RELIANCE</span><span class="t-val">2,901.15</span><span class="t-chg pos">▲ +0.87%</span></span>
+    <span class="ticker-item"><span class="t-sym">INFY</span><span class="t-val">1,389.55</span><span class="t-chg neg">▼ −1.43%</span></span>
+    <span class="ticker-item"><span class="t-sym">TCS</span><span class="t-val">3,412.80</span><span class="t-chg pos">▲ +3.55%</span></span>
+    <span class="ticker-item"><span class="t-sym">TATAMOTORS</span><span class="t-val">847.60</span><span class="t-chg neg">▼ −0.62%</span></span>
+    <span class="ticker-item"><span class="t-sym">ICICIBANK</span><span class="t-val">1,127.45</span><span class="t-chg pos">▲ +0.45%</span></span>
+    <span class="ticker-item"><span class="t-sym">LT</span><span class="t-val">3,562.10</span><span class="t-chg pos">▲ +1.72%</span></span>
+    <span class="ticker-item"><span class="t-sym">BAJFINANCE</span><span class="t-val">7,038.25</span><span class="t-chg neg">▼ −3.00%</span></span>
+    <span class="ticker-item"><span class="t-sym">MARUTI</span><span class="t-val">12,380.50</span><span class="t-chg pos">▲ +2.80%</span></span>
+    <span class="ticker-item"><span class="t-sym">NIFTY 50</span><span class="t-val">22,419.95</span><span class="t-chg pos">▲ +0.38%</span></span>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero-section a2">
+  <h2 class="hero-headline">Scan. <em>Analyze.</em><br>Execute with clarity.</h2>
+  <div class="hero-quote">
+    <p>"Most traders lose not because they can't read a chart — but because they're reading the wrong sector at the wrong time."</p>
+    <small>That's the gap SCANERA was built to close.</small>
+  </div>
+</div>
+
+<div class="sec-sep"></div>
+
+<!-- ══ FY PERFORMANCE ══ -->
+<div class="perf-section">
+  <div class="perf-header">
+    <div class="sec-tag">Verified track record</div>
+    <h2 class="sec-title">This <em>financial year</em> — by the numbers</h2>
+    <p style="font-size:13.5px;color:var(--text-muted);margin-top:6px;font-weight:300;">FY 2024–25 · Live, unfiltered signal results across all sector baskets.</p>
+  </div>
+  <div class="perf-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="perf-card c-teal">
+      <div class="perf-num"><span class="count-up" data-target="84.3" data-suffix="%">0%</span></div>
+      <div class="perf-label">Win Rate</div>
+      <div class="perf-sub">54 of 64 signals</div>
+    </div>
+    <div class="perf-card c-amber">
+      <div class="perf-num"><span class="count-up" data-target="64" data-suffix="">0</span></div>
+      <div class="perf-label">Signals Fired</div>
+      <div class="perf-sub">14 sector baskets</div>
+    </div>
+    <div class="perf-card c-blue">
+      <div class="perf-num"><span class="count-up" data-target="3.8" data-prefix="+" data-suffix="%">+0%</span></div>
+      <div class="perf-label">Avg Return</div>
+      <div class="perf-sub">Per closed trade</div>
+    </div>
+    <div class="perf-card" style="--accent-clr:#f5a623;background:linear-gradient(145deg,rgba(245,166,35,0.07),rgba(13,17,23,0.6));border-color:rgba(245,166,35,0.2)">
+      <div class="perf-num" style="font-size:clamp(16px,1.8vw,22px);color:#f5a623;text-shadow:0 0 28px rgba(245,166,35,0.3);line-height:1.2">HDFC<br>Bank</div>
+      <div class="perf-label" style="margin-top:6px">Best Trade FY</div>
+      <div class="perf-sub" style="color:#f5a623;font-size:12px;margin-top:4px;font-weight:600">+8.4% · 4 days</div>
+    </div>
+  </div>
+  <p class="perf-disclaimer">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L1.5 14.5h13L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 6.5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.5" fill="currentColor"/></svg>
+    Past performance does not guarantee future returns. Analytics and educational purposes only.
+  </p>
+</div>
+
+<div class="sec-sep"></div>
+
+<!-- ACTIVE SIGNALS -->
+<div class="sec">
+  <div class="sec-header">
+    <div>
+      <div class="sec-tag">Active signals</div>
+      <h2 class="sec-title">Your <em>positions</em> today</h2>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span id="signalsUpdatedAt" style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace"></span>
+      <button id="refreshSignalsBtn" type="button" style="display:flex;align-items:center;gap:7px;background:rgba(0,196,160,0.08);border:1.5px solid rgba(0,196,160,0.22);color:var(--teal);padding:7px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.25s">
+        <svg id="refreshIcon" width="13" height="13" viewBox="0 0 16 16" fill="none" style="transition:transform 0.5s">
+          <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+  <div class="signals-grid" id="signalsGrid">
+    <!-- Populated dynamically from /api/stocks. See loadSignals() below. -->
+    <p style="color:var(--text-muted);font-size:13px;grid-column:1/-1">Loading signals…</p>
+  </div>
+</div>
+
+<div class="sec-sep"></div>
+
+<!-- WATCHLIST -->
+<div class="sec">
+  <div class="sec-header">
+    <div>
+      <div class="sec-tag">Watchlist</div>
+      <h2 class="sec-title">Stocks <em>waiting</em> for entry</h2>
+    </div>
+    <a href="#" class="view-all">View all →</a>
+  </div>
+  <div class="watch-grid">
+    <div class="watch-card">
+      <div class="stock-dot sd-amber"><div class="dot-ring"><div class="dot-core"></div></div></div>
+      <div class="watch-info"><h4>Tata Motors</h4><p>Automobile</p></div>
+      <span class="watch-badge">Waiting</span>
+    </div>
+    <div class="watch-card">
+      <div class="stock-dot sd-teal"><div class="dot-ring"><div class="dot-core"></div></div></div>
+      <div class="watch-info"><h4>ICICI Bank</h4><p>Banking</p></div>
+      <span class="watch-badge">Waiting</span>
+    </div>
+    <div class="watch-card">
+      <div class="stock-dot sd-teal"><div class="dot-ring"><div class="dot-core"></div></div></div>
+      <div class="watch-info"><h4>L&amp;T</h4><p>Engineering</p></div>
+      <span class="watch-badge">Waiting</span>
+    </div>
+  </div>
+</div>
+
+<div class="sec-sep"></div>
+
+<!-- RECENT ACTIVITY -->
+<div class="sec">
+  <div class="sec-header">
+    <div>
+      <div class="sec-tag">Recent activity</div>
+      <h2 class="sec-title">What <em>happened</em> lately</h2>
+    </div>
+    <a href="#" class="view-all">View all →</a>
+  </div>
+  <div class="act-list">
+    <div class="act-item">
+      <div class="stock-dot sd-cyan"><div class="dot-ring"><div class="dot-core"></div></div></div>
+      <div class="act-meta"><h4>TCS — IT</h4><p>Today, 9:15 AM · Signal closed</p></div>
+      <div class="act-ret pos"><small>Return</small>+3.55%</div>
+    </div>
+    <div class="act-item">
+      <div class="stock-dot sd-rose"><div class="dot-ring"><div class="dot-core"></div></div></div>
+      <div class="act-meta"><h4>Bajaj Finance — Finance</h4><p>Yesterday, 3:20 PM · Signal closed</p></div>
+      <div class="act-ret neg"><small>Return</small>−3.00%</div>
+    </div>
+    <div class="act-item">
+      <div class="stock-dot sd-amber"><div class="dot-ring"><div class="dot-core"></div></div></div>
+      <div class="act-meta"><h4>Maruti Suzuki — Automobile</h4><p>Apr 10, 11:30 AM · Signal closed</p></div>
+      <div class="act-ret pos"><small>Return</small>+2.80%</div>
+    </div>
+  </div>
+</div>
+
+<div class="sec-sep"></div>
+
+<!-- WHY SCANERA -->
+<div class="sec">
+  <div class="sec-tag">Why SCANERA</div>
+  <h2 class="sec-title">Built for the <em>thoughtful</em> trader</h2>
+  <p style="font-size:15px;color:var(--text-secondary);max-width:460px;line-height:1.75;font-weight:300;">Not noise. Not an alert every five minutes. Just clean, high-conviction signals from sectors already showing strength — built by someone who's been trading NSE since 2000.</p>
+  <div class="features-bento">
+    <div class="feat-card main">
+      <div class="feat-icon i-teal">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="#00c4a0" stroke-width="1.4" stroke-dasharray="3 2" opacity="0.4"/><circle cx="11" cy="11" r="5.5" stroke="#00c4a0" stroke-width="1.4" opacity="0.7"/><circle cx="11" cy="11" r="2.5" fill="#00c4a0"/><line x1="11" y1="11" x2="17" y2="5" stroke="#f5a623" stroke-width="1.2" stroke-linecap="round"/><circle cx="17" cy="5" r="1.2" fill="#f5a623"/></svg>
+      </div>
+      <h3 class="feat-title">We follow where strength flows</h3>
+      <p class="feat-body">Markets don't move randomly — money rotates between sectors in predictable cycles. SCANERA watches these shifts across weekly and daily timeframes, identifying sectors accelerating before the mainstream notices.</p>
+      <div class="feat-chart">
+        <svg width="100%" height="130" viewBox="0 0 460 130" xmlns="http://www.w3.org/2000/svg">
+          <line x1="0" y1="20" x2="460" y2="20" stroke="rgba(255,255,255,0.032)" stroke-width="1" stroke-dasharray="3,8"/>
+          <line x1="0" y1="65" x2="460" y2="65" stroke="rgba(255,255,255,0.032)" stroke-width="1" stroke-dasharray="3,8"/>
+          <line x1="0" y1="110" x2="460" y2="110" stroke="rgba(255,255,255,0.032)" stroke-width="1" stroke-dasharray="3,8"/>
+          <path d="M0,38 C60,40 110,48 160,62 C210,80 240,100 290,112 C340,122 390,126 460,127" stroke="#f5a623" stroke-width="1.5" fill="none" stroke-dasharray="5,4" opacity="0.7"/>
+          <path d="M0,102 C60,98 110,92 160,82 C210,70 250,58 300,44 C350,32 400,26 460,22" stroke="#3b6fff" stroke-width="1.6" fill="none" stroke-dasharray="7,4" opacity="0.82"/>
+          <path d="M0,94 C50,90 90,80 130,64 C170,46 200,26 240,12 C280,0 340,0 460,0" stroke="#00c4a0" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <circle cx="460" cy="0" r="5" fill="#00c4a0" opacity="0.95"/>
+          <text x="330" y="10" fill="#00c4a0" font-size="8" font-family="DM Sans" font-weight="700">Banking ↗ Leading</text>
+          <text x="350" y="18" fill="#3b6fff" font-size="8" font-family="DM Sans" font-weight="500">FMCG ↗</text>
+          <text x="350" y="128" fill="#f5a623" font-size="8" font-family="DM Sans" font-weight="500">Energy ↘</text>
+        </svg>
+      </div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon i-blue">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2 L19 6 L19 11 C19 15.4 15.4 19.4 11 21 C6.6 19.4 3 15.4 3 11 L3 6 Z" stroke="#3b6fff" stroke-width="1.4" stroke-linejoin="round" fill="none" opacity="0.8"/><path d="M8 11 L10 13 L14 9" stroke="#3b6fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="feat-title">Risk is defined before entry</h3>
+      <p class="feat-body">Every signal carries a 2.5–3% hard stop loss. No ambiguity, no emotional exits. You know your downside before you press buy.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sec-sep"></div>
+
+<!-- ══════════════════════════════════════════
+     FOUNDER'S CORNER — sector map + chat
+════════════════════════════════════════════ -->
+<div class="founders-section">
+  <div style="margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <!-- SCANERA logo mark -->
+      <div style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0a2e28,#0d3d34);border:1px solid rgba(0,196,160,0.28);box-shadow:0 0 12px rgba(0,196,160,0.18);flex-shrink:0">
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2.5 A7.5 7.5 0 1 1 4.7 15.3" stroke="#00c4a0" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+          <path d="M10 5.5 A4.5 4.5 0 1 1 6.8 13.2" stroke="#00c4a0" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.6"/>
+          <circle cx="10" cy="10" r="2" fill="#00c4a0"/>
+          <line x1="10" y1="10" x2="15.8" y2="4.2" stroke="#00c4a0" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
+          <circle cx="15.8" cy="4.2" r="1.1" fill="#f5a623" opacity="0.9"/>
+        </svg>
+      </div>
+      <span style="font-size:10.5px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--amber)">Founder's Corner</span>
+    </div>
+    <h2 class="sec-title">Ask the founder <em style="color:var(--amber)">anything</em></h2>
+  </div>
+
+  <div class="founders-card" style="opacity:1;transform:none">
+    <div class="founders-inner" style="grid-template-columns:1fr">
+
+      <!-- FULL WIDTH: Founder chat -->
+      <div style="padding:36px 40px;display:flex;flex-direction:column;gap:0">
+
+        <!-- ① HEADER — teal accent, prominent -->
+        <div style="padding:28px 32px 24px;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <div style="display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:var(--amber);background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);padding:5px 12px;border-radius:20px;margin-bottom:14px">
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--amber);box-shadow:0 0 4px rgba(245,166,35,0.5);display:inline-block"></span>
+            Ask the Founder
+          </div>
+          <div style="font-family:'Fraunces',serif;font-size:clamp(20px,2.2vw,26px);font-weight:300;line-height:1.2;color:var(--text-primary)">
+            Got a question about the <em style="font-style:italic;color:var(--amber)">market?</em>
+          </div>
+          <p style="font-size:13px;color:var(--text-muted);line-height:1.7;font-weight:300;margin-top:8px">
+            Ask about sector momentum, signal logic, or risk areas — the founder responds personally.
+          </p>
+        </div>
+
+        <!-- ② SUGGESTION CHIPS — distinct teal-bordered style -->
+        <div style="padding:20px 32px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:10px;color:var(--teal);letter-spacing:0.1em;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span style="width:12px;height:1px;background:var(--teal);display:inline-block"></span>
+            Quick questions
+          </div>
+          <div onclick="fillChat(this)" style="padding:11px 16px;border-radius:10px;font-size:13px;color:var(--teal);background:rgba(0,196,160,0.05);border:1px solid rgba(0,196,160,0.2);cursor:pointer;display:flex;align-items:flex-start;gap:10px;line-height:1.5;transition:all 0.2s" onmouseover="this.style.background='rgba(0,196,160,0.1)'" onmouseout="this.style.background='rgba(0,196,160,0.05)'">
+            <span style="font-size:13px;flex-shrink:0;margin-top:1px">⚡</span>
+            <span>Which sector has strong momentum with low risk right now?</span>
+          </div>
+          <div onclick="fillChat(this)" style="padding:11px 16px;border-radius:10px;font-size:13px;color:var(--teal);background:rgba(0,196,160,0.05);border:1px solid rgba(0,196,160,0.2);cursor:pointer;display:flex;align-items:flex-start;gap:10px;line-height:1.5;transition:all 0.2s" onmouseover="this.style.background='rgba(0,196,160,0.1)'" onmouseout="this.style.background='rgba(0,196,160,0.05)'">
+            <span style="font-size:13px;flex-shrink:0;margin-top:1px">🔍</span>
+            <span>Is Banking still in the Leading quadrant or losing strength?</span>
+          </div>
+        </div>
+
+        <!-- ③ CHAT INPUT — prominent, full-width -->
+        <div style="padding:20px 32px;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <div style="font-size:10px;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span style="width:12px;height:1px;background:var(--text-muted);display:inline-block"></span>
+            Your question
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:0;background:rgba(255,255,255,0.04);border:1.5px solid rgba(245,166,35,0.22);border-radius:14px;overflow:hidden;transition:border-color 0.2s" onfocusin="this.style.borderColor='rgba(245,166,35,0.5)'" onfocusout="this.style.borderColor='rgba(245,166,35,0.22)'">
+            <textarea id="chatInput" rows="2" placeholder="Type your market question here…" style="flex:1;background:transparent;border:none;outline:none;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text-primary);line-height:1.55;resize:none;min-height:56px;max-height:120px"></textarea>
+            <button onclick="sendChat()" style="background:rgba(245,166,35,0.15);border:none;border-left:1px solid rgba(245,166,35,0.18);color:var(--amber);padding:0 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;align-self:stretch;min-width:56px;transition:background 0.2s" onmouseover="this.style.background='rgba(245,166,35,0.28)'" onmouseout="this.style.background='rgba(245,166,35,0.15)'">
+              <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M17 10L3 3l3.5 7L3 17l14-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ④ SUPER CHAT — quiet, tasteful -->
+        <div style="padding:14px 32px 24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <span style="font-size:11.5px;color:var(--text-muted);font-weight:300">☕ <em style="font-style:normal;color:rgba(245,166,35,0.6);font-weight:400">Super Chat</em> · voluntary · keeps this ad-free</span>
+            <button onclick="" style="background:transparent;border:1px solid rgba(245,166,35,0.25);color:rgba(245,166,35,0.75);padding:5px 14px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.2s;letter-spacing:0.01em" onmouseover="this.style.borderColor='rgba(245,166,35,0.5)';this.style.color='#f5a623';this.style.background='rgba(245,166,35,0.06)'" onmouseout="this.style.borderColor='rgba(245,166,35,0.25)';this.style.color='rgba(245,166,35,0.75)';this.style.background='transparent'">₹49</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-disc">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L1.5 14.5h13L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 6.5v3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="11.5" r="0.5" fill="currentColor"/></svg>
+      Past performance does not guarantee future results. SCANERA provides data analytics, not regulated investment advice.
+    </div>
+    <div style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;letter-spacing:0.04em">
+      <span style="width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block;box-shadow:0 0 4px rgba(0,196,160,0.4)"></span>
+      NSE · Live
+    </div>
+  </div>
+</footer>
+
+<script>
+// Countdown
+(function(){
+  let t=3*60+20;
+  const el=document.getElementById('countdown');
+  if(!el)return;
+  const tick=()=>{
+    const m=Math.floor(t/60),s=t%60;
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(t>0){t--;setTimeout(tick,1000);}
+    else{el.textContent='NOW';el.style.color='#f5a623';el.style.textShadow='0 0 60px rgba(245,166,35,0.6)';}
+  };
+  tick();
+})();
+
+// ════════════════════════════════════════════════
+// LIVE SIGNALS — pulled from Spring Boot /api/stocks
+// ════════════════════════════════════════════════
+
+// Point this at your Spring Boot backend.
+const API_BASE_URL = "http://localhost:8081";
+
+const STOCK_DOT_CLASSES = ["sd-teal","sd-blue","sd-amber","sd-rose","sd-purple","sd-cyan"];
+
+function dotClassForIndex(i) {
+  return STOCK_DOT_CLASSES[i % STOCK_DOT_CLASSES.length];
+}
+
+function formatEntryDate(isoDate) {
+  if (!isoDate) return "—";
+  const d = new Date(isoDate);
+  if (isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+}
+
+// Status text comes straight from the STATUS column. We only decide which
+// color bucket it falls into: anything containing "active" -> teal,
+// anything containing "hold" -> amber, anything else -> a neutral default.
+function statusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s.includes("active")) return "active";
+  if (s.includes("hold")) return "hold";
+  return "hold"; // fallback bucket; adjust if you add more STATUS values
+}
+
+// CHANGES column drives the +/- return shown bottom-right of the card.
+function changesClass(changes) {
+  if (!changes) return "pos";
+  return String(changes).trim().startsWith("-") ? "neg" : "pos";
+}
+
+function buildSignalCard(stock, index) {
+  const dotClass = dotClassForIndex(index);
+  const stClass = statusClass(stock.status);
+  const retClass = changesClass(stock.changes);
+  const entry = formatEntryDate(stock.entryDate);
+  const changesText = stock.changes || "—";
+  const statusText = stock.status || "—";
+
+  return `
+    <div class="signal-card">
+      <div class="sig-head">
+        <div class="sig-co">
+          <div class="stock-dot ${dotClass}"><div class="dot-ring"><div class="dot-core"></div></div></div>
+          <div class="co-name"><h4>${escapeHtml(stock.stockName)}</h4><p>${escapeHtml(stock.sector || "")}</p></div>
+        </div>
+      </div>
+      <div class="sig-meta">
+        <div class="m-row"><span class="m-lbl">Entry date</span><span class="m-val">${entry}</span></div>
+        <div class="m-row"><span class="m-lbl">Status</span><span class="m-val ${stClass}">${escapeHtml(statusText)}</span></div>
+      </div>
+      <div class="sig-foot">
+        <span class="status-txt"><span class="s-dot"></span>${escapeHtml(statusText)}</span>
+        <span class="sig-ret ${retClass}">${escapeHtml(changesText)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = String(str ?? "");
+  return div.innerHTML;
+}
+
+async function loadSignals() {
+  const grid = document.getElementById('signalsGrid');
+  const refreshBtn = document.getElementById('refreshSignalsBtn');
+  const refreshIcon = document.getElementById('refreshIcon');
+  const updatedAtEl = document.getElementById('signalsUpdatedAt');
+
+  if (refreshBtn) refreshBtn.disabled = true;
+  if (refreshIcon) refreshIcon.style.transform = 'rotate(360deg)';
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/stocks`);
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    const stocks = await res.json();
+
+    if (!Array.isArray(stocks) || stocks.length === 0) {
+      grid.innerHTML = `<p style="color:var(--text-muted);font-size:13px;grid-column:1/-1">No signals yet.</p>`;
+    } else {
+      // Backend already sorts newest-first (ENTRY_DATE desc, ID desc),
+      // so we render in the order received - no extra sort needed here.
+      grid.innerHTML = stocks.map((s, i) => buildSignalCard(s, i)).join('');
+    }
+
+    if (updatedAtEl) {
+      const now = new Date();
+      updatedAtEl.textContent = `Updated ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+  } catch (err) {
+    console.error('Failed to load signals:', err);
+    grid.innerHTML = `<p style="color:var(--rose);font-size:13px;grid-column:1/-1">Couldn't reach the signals API at ${API_BASE_URL}. Make sure the Spring Boot backend is running.</p>`;
+  } finally {
+    if (refreshBtn) refreshBtn.disabled = false;
+    setTimeout(() => { if (refreshIcon) refreshIcon.style.transform = 'rotate(0deg)'; }, 500);
+  }
+}
+
+document.getElementById('refreshSignalsBtn')?.addEventListener('click', loadSignals);
+
+// Initial load on page open
+loadSignals();
+
+// Fill chat from suggestion chip
+function fillChat(el){
+  const ta=document.getElementById('chatInput');
+  const span=el.querySelector('span:last-child')||el;
+  ta.value=span.textContent.trim().replace(/^[^\w⚡🔍]+/,'');
+  ta.focus();
+}
+
+// Send chat (stub — shows visual feedback)
+function sendChat(){
+  const ta=document.getElementById('chatInput');
+  if(!ta.value.trim())return;
+  const btn=document.querySelector('.chat-send-btn');
+  btn.style.background='rgba(0,196,160,0.2)';
+  btn.style.color='var(--teal)';
+  setTimeout(()=>{
+    btn.style.background='';
+    btn.style.color='';
+  },800);
+  // In production: wire to your backend here
+  ta.value='';
+  ta.placeholder='Message sent. Founder will respond shortly…';
+  setTimeout(()=>ta.placeholder='Ask about sector momentum, signal logic, risk areas…',4000);
+}
+
+// Enter key sends
+document.getElementById('chatInput')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+});
+
+// Count-up animation
+function animateCountUp(el){
+  const target=parseFloat(el.dataset.target);
+  const suffix=el.dataset.suffix||'';
+  const prefix=el.dataset.prefix||'';
+  const isFloat=String(target).includes('.');
+  const dur=1800,start=performance.now();
+  const step=ts=>{
+    const pct=Math.min((ts-start)/dur,1);
+    const ease=1-Math.pow(1-pct,3);
+    const val=target*ease;
+    el.textContent=prefix+(isFloat?val.toFixed(1):Math.floor(val))+suffix;
+    if(pct<1)requestAnimationFrame(step);
+    else el.textContent=prefix+(isFloat?target.toFixed(1):target)+suffix;
+  };
+  requestAnimationFrame(step);
+}
+
+// Scroll fade-in + count-up trigger
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.style.opacity='1';
+      e.target.style.transform='translateY(0)';
+      e.target.querySelectorAll('.count-up').forEach(animateCountUp);
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:0.1});
+
+document.querySelectorAll('.watch-card,.act-item,.feat-card,.perf-card,.br-stat').forEach(el=>{
+  el.style.opacity='0';
+  el.style.transform='translateY(16px)';
+  el.style.transition='opacity 0.5s ease,transform 0.5s ease';
+  io.observe(el);
+});
+</script>
+</body>
+</html>
